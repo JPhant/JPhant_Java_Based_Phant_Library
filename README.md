@@ -3,7 +3,7 @@ JPhant: Java Library for PHant Access
 https://github.com/JPhant/JPhant_Java_Based_Phant_Library
 
 *** Features ***
-  Fully Configurable (Public/Private/Delete Keys, Fieldnames, BaseURL, use GET or POST.)
+  Fully Configurable (Public/Private/Delete Keys, Fieldnames, BaseURL, ProxyHost & Port, use GET or POST.)
   Can Handle multiple simultaneous Phant Data Streams in same program.
   Can use GET or POST (Using POST will encrypt your PrivateKey and Data in transit.)
   Can Send/Receive any Character 0 through 127
@@ -19,6 +19,7 @@ https://github.com/JPhant/JPhant_Java_Based_Phant_Library
   * Convert to/from supported Data Structures (String[][] and ArrayList<ArrayList<String>>.)
   * Smart CSV Extraction (handles embedded Quotes, Commas, Carriage Returns, and Line Feeds.)
   * Automatic Retries on HTTPConnection Errors (up to 5 retries.)
+  * Can optionally use a ProxyHost and Port (if you're behind a company Firewall/Proxy Server.)
 
 -------------------------------------------------------------------------
   I'm going to be very busy for the next few months, and can't develop this further.  I hereby put this "as is" in the Public Domain, I hope someone will pick it up and run with it. Here is a quick overview...
@@ -30,7 +31,7 @@ To use:
 1a) Create a class that implements JPhantConfig and enter the appropriate Keys and Fieldnames.
     (see JPhant_Config_0.java for an example.)
 
-1) --- Configure ---
+2) --- Configure ---
 2a) Instantiate a JPhant instance, for example...
     JPhant jPhant0 = new JPhant(new JPhant_Config_0());
 
