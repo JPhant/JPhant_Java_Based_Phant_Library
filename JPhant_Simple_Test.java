@@ -7,6 +7,7 @@ public class JPhant_Simple_Test {
 	public static void main(String[] sArgs) {
 		// Configure
 		final JPhant jPhant1 = new JPhant(new JPhant_Config_1());
+		System.out.println("Manual URL: "+jPhant1.getsPhantURL()+"streams/"+jPhant1.getsPublicKey());
 		
 		System.out.println("---------------------------------");
 		System.out.println("Test Clear & Stats");
