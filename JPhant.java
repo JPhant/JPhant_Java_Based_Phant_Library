@@ -8,6 +8,7 @@ import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Properties;
 
 public class JPhant {
 	public enum Format { csv, json, jsonp };
@@ -15,7 +16,7 @@ public class JPhant {
 	private static final String sCLEAR = "clear";
 	private static final String sOUTPUT = "output/";
 	private static final String sSTATS = "stats";
-	private static final String sSTREAMS = "streams/";
+	//private static final String sSTREAMS = "streams/";
 	private static final String sPRIVATE_KEY_EQUALS = "private_key=";
 	private static final String sX_RATE_LIMIT_LIMIT = "X-Rate-Limit-Limit";
 	private static final String sX_RATE_LIMIT_REMAINING = "X-Rate-Limit-Remaining";
@@ -24,6 +25,8 @@ public class JPhant {
 	private static final String sPAGE_EQUALS = "page=";
 	private static final int iRETRY_COUNT = 5;
 	private static final int iRETRY_DELAY_MS = 1000;
+	private static final String sHTTPS_PROXY_HOST = "https://proxyHost";
+	private static final String sHTTPS_PROXY_PORT = "https://proxyPort";
 
 	// *** Configuration *** //
 	private String sPublicKey = "";
@@ -31,6 +34,7 @@ public class JPhant {
 	//private String sDeleteKey = "";
 	private String[] asFields = null;
 	private String sPhantURL = "";
+	private String sProxyHostAndPort = "";
 	private JPhantConfig.Method eMethod = JPhantConfig.Method.POST;
 
 	private int iXRateLimitLimit = 0;
@@ -39,6 +43,7 @@ public class JPhant {
 	public interface JPhantConfig {
 		public Method getMethod();
 		public String getBaseURL();
+		public String getProxyHostAndPort();
 		public String getPublicKey();
 		public String getPrivateKey();
 		//public String getDeleteKey();
@@ -65,18 +70,24 @@ public class JPhant {
 	}
 	public JPhant(final JPhantConfig jpcConfig) {
 		this.sPhantURL = jpcConfig.getBaseURL();
+		this.sProxyHostAndPort = jpcConfig.getProxyHostAndPort();
 		this.sPublicKey = jpcConfig.getPublicKey();
 		this.sPrivateKey = jpcConfig.getPrivateKey();
 		//this.sDeleteKey = jpcConfig.getDeleteKey();
 		this.asFields = jpcConfig.getFields();
 		this.eMethod = jpcConfig.getMethod();
-		System.out.println("Manual URL: "+this.sPhantURL+sSTREAMS+this.sPublicKey);
 	}
+	public String getsPublicKey() { return sPublicKey; }
+	public String getsPrivateKey() { return sPrivateKey; }
+	public String[] getAsFields() { return asFields; }
+	public String getsPhantURL() { return sPhantURL; }
+	public String getsProxyHostAndPort() { return sProxyHostAndPort; }
+	public JPhantConfig.Method geteMethod() { return eMethod; }
 	public boolean clear() {
 		try {
 			//	Clear All Data
 			//	http://data.sparkfun.com/input/PUBLIC_KEY/clear?private_key=PRIVATE_KEY
-			final String sClearURL = sPhantURL+sINPUT+sPublicKey+"/"+sCLEAR+"?"+sPRIVATE_KEY_EQUALS+sPrivateKey;
+			final String sClearURL = getsPhantURL()+sINPUT+getsPublicKey()+"/"+sCLEAR+"?"+sPRIVATE_KEY_EQUALS+getsPrivateKey();
 			return getURL(sClearURL).substring(0, 1).equals("1");
 		} catch (final Exception e) {
 			System.err.println(e);
@@ -99,7 +110,7 @@ public class JPhant {
 		try {
 			//	Get Data
 			//	http://data.sparkfun.com/output/PUBLIC_KEY.FORMAT
-			final String sGetDataURL = sPhantURL+sOUTPUT+sPublicKey+"."+eFormat.toString()+"?"+sPAGE_EQUALS+iPage;
+			final String sGetDataURL = getsPhantURL()+sOUTPUT+getsPublicKey()+"."+eFormat.toString()+"?"+sPAGE_EQUALS+iPage;
 			return getURL(sGetDataURL);
 		} catch (final Exception e) {
 			System.err.println(e);
@@ -111,7 +122,7 @@ public class JPhant {
 		try {
 			//	Get Status
 			//	http://data.sparkfun.com/output/PUBLIC_KEY/stats.FORMAT
-			final String sStatsURL = sPhantURL+sOUTPUT+sPublicKey+"/"+sSTATS+"."+eFormat.toString();
+			final String sStatsURL = getsPhantURL()+sOUTPUT+getsPublicKey()+"/"+sSTATS+"."+eFormat.toString();
 			return getURL(sStatsURL);
 		} catch (final Exception e) {
 			System.err.println(e);
@@ -146,12 +157,12 @@ public class JPhant {
 			// Verify aasData[0]===asFields
 			if(aasData.length!=2) {
 				throw new Exception("Array size Mismatch in addData: aasData.length="+aasData.length+" it must==2");
-			} else if(aasData[0].length!=asFields.length) {
-				throw new Exception("Data Field Mismatch in addData: aasData[0].length="+aasData[0].length+" not equal asFields.length="+asFields.length);
-			} else if(aasData[1].length!=asFields.length) {
-				throw new Exception("Data Field Mismatch in addData: aasData[1].length="+aasData[1].length+" not equal asFields.length="+asFields.length);
-			} else for(int x=0 ; x<asFields.length ; x++) {
-				if(aasData[0][x].equals(asFields[x])==false) {
+			} else if(aasData[0].length!=getAsFields().length) {
+				throw new Exception("Data Field Mismatch in addData: aasData[0].length="+aasData[0].length+" not equal asFields.length="+getAsFields().length);
+			} else if(aasData[1].length!=getAsFields().length) {
+				throw new Exception("Data Field Mismatch in addData: aasData[1].length="+aasData[1].length+" not equal asFields.length="+getAsFields().length);
+			} else for(int x=0 ; x<getAsFields().length ; x++) {
+				if(aasData[0][x].equals(getAsFields()[x])==false) {
 					throw new Exception("Data Field Mismatch in addData: aasData[0]["+x+"]='"+aasData[0][x]+"' not equal asFields[x]");
 				}
 			}
@@ -162,7 +173,7 @@ public class JPhant {
 				//System.out.println("x="+x);
 				sAddData += ((sAddData.length()>0)?"&":"")+aasData[0][x]+"="+URLEncoder.encode(aasData[1][x].replace("\r", "\\r").replace("\n", "\\n"), "UTF-8");
 			}
-			final String sAddDataPostURL = sPhantURL+sINPUT+sPublicKey+((this.eMethod==JPhantConfig.Method.GET)?"?"+sPRIVATE_KEY_EQUALS+sPrivateKey+"&"+sAddData:"");
+			final String sAddDataPostURL = getsPhantURL()+sINPUT+getsPublicKey()+((this.geteMethod()==JPhantConfig.Method.GET)?"?"+sPRIVATE_KEY_EQUALS+getsPrivateKey()+"&"+sAddData:"");
 			String sData = null;
 			int iTries = iRETRY_COUNT;
 			while(iTries>0 && sData==null) {
@@ -170,8 +181,8 @@ public class JPhant {
 					//System.out.println("sAddDataURL="+sAddDataURL);
 					final URL url = new URL(sAddDataPostURL);
 					final URLConnection urlc = url.openConnection();
-					if(eMethod==JPhantConfig.Method.POST) {
-						urlc.setRequestProperty(sPHANT_PRIVATE_KEY_HEADER, sPrivateKey);
+					if(geteMethod()==JPhantConfig.Method.POST) {
+						urlc.setRequestProperty(sPHANT_PRIVATE_KEY_HEADER, getsPrivateKey());
 						urlc.setDoInput(true);
 						urlc.setDoOutput(true);
 						OutputStreamWriter osw = new OutputStreamWriter(urlc.getOutputStream());
@@ -201,7 +212,7 @@ public class JPhant {
 				} catch (final Exception e) {
 					System.err.println(e);
 					e.printStackTrace();
-					System.out.println(iTries+" Retrys left for "+eMethod.toString()+":"+sAddDataPostURL+((eMethod==JPhantConfig.Method.POST)?sPHANT_PRIVATE_KEY_HEADER+sPrivateKey+"&"+sAddData:""));
+					System.out.println(iTries+" Retrys left for "+geteMethod().toString()+":"+sAddDataPostURL+((geteMethod()==JPhantConfig.Method.POST)?sPHANT_PRIVATE_KEY_HEADER+getsPrivateKey()+"&"+sAddData:""));
 					sData = null;
 				} finally {
 					iTries--;
@@ -221,7 +232,7 @@ public class JPhant {
 		ArrayList<ArrayList<String>> alalData = new ArrayList<ArrayList<String>>();
 		if(aasData==null) {
 			ArrayList<String> alData = new ArrayList<String>();
-			for(String sField : asFields) {
+			for(String sField : getAsFields()) {
 				alData.add(sField);
 			}
 			alalData.add(alData);
@@ -240,7 +251,7 @@ public class JPhant {
 		String[][]aas = null;
 		if(alalData==null) {
 			aas = new String[2][];
-			aas[0] = asFields.clone();
+			aas[0] = getAsFields().clone();
 			return aas;
 		}
 		aas = new String[alalData.size()][];
@@ -258,7 +269,26 @@ public class JPhant {
 		while(iTries>0 && sData.equals("")) {
 			try {
 				final URL url = new URL(sURL);
+				String sProxyHost = "";
+				String sProxyPort  = "";
+				if(this.getsProxyHostAndPort().length()>0) {
+					final String[] asProxyHostAndPort = this.getsProxyHostAndPort().split("\\:");
+					if(asProxyHostAndPort!=null && asProxyHostAndPort.length>=1 && asProxyHostAndPort[0]!=null && asProxyHostAndPort[0].length()>0) {
+						sProxyHost = asProxyHostAndPort[0];
+						if(asProxyHostAndPort.length>=2 && asProxyHostAndPort[1]!=null && asProxyHostAndPort[1].length()>0) {
+							sProxyPort = asProxyHostAndPort[1];
+						} else {
+							sProxyPort = "80";
+						}
+					}
+				}
+				//System.out.println("\t\t\tProxyHost:Port="+sProxyHost+":"+sProxyPort);
 				final URLConnection urlc = url.openConnection();
+				if(sProxyHost.length()>0) {
+					final Properties pSystemProperties = System.getProperties();
+					pSystemProperties.setProperty(sHTTPS_PROXY_HOST, sProxyHost);
+					pSystemProperties.setProperty(sHTTPS_PROXY_PORT, sProxyPort);
+				}
 				final BufferedReader br = new BufferedReader(new InputStreamReader(urlc.getInputStream()));
 				String sLine = br.readLine(); 
 				//System.out.println("\t\t\tsLine="+sLine);
